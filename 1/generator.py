@@ -3,7 +3,7 @@ import argparse
 
 maxint = 1 << 31
 
-parser = argparse.ArgumentParser(description = "Generate random numbers file")
+parser = argparse.ArgumentParser(description="Generate random numbers file")
 parser.add_argument('-f', type=str, required=True, help="file name")
 parser.add_argument('-c', type=int, required=True, help='number count')
 parser.add_argument('-m', type=int, default=maxint, help='maximal number')

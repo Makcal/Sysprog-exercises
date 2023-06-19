@@ -152,7 +152,7 @@ coro_this(void)
 
 /**
  * The core part of the coroutines creation - this signal handler
- * is run on a separate stack using sigaltstack. On an invokation
+ * is run on a separate stack using sigaltstack. On an invocation
  * it remembers its current context and jumps back to the
  * coroutine constructor. Later the coroutine continues from here.
  */
@@ -207,7 +207,7 @@ coro_new(coro_f func, void *func_arg)
 		handle_error();
 	/*
 	 * New handler should jump onto a new stack and remember
-	 * that position. Afterwards the stack is disabled and
+	 * that position. Afterward the stack is disabled and
 	 * becomes dedicated to that single coroutine.
 	 */
 	struct sigaction newsa, oldsa;
