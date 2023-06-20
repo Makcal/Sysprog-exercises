@@ -65,13 +65,13 @@ static coro_context
     return context;
 }
 
-static __always_inline void
+static void
 coro_start_timer(coro_context *context)
 {
     clock_gettime(CLOCK_MONOTONIC, &context->start_time);
 }
 
-static __always_inline void
+static void
 coro_end_timer(coro_context *context)
 {
     clock_gettime(CLOCK_MONOTONIC, &context->end_time);
@@ -99,14 +99,11 @@ coro_append_execution_time(coro_context *context)
  * @param file_name file to open & sort
  */
 static void
-coro_handle_file_selection(coro_context *casted_context, struct coro *this, char *file_name)
+coro_handle_file_selection(coro_context *casted_context, char *file_name)
 {
     printf("%s: selected file %s\n", casted_context->name, file_name);
 
     {
-        printf("%s: yield\n", casted_context->name);
-        printf("%s: switch count before yield: %lld\n", casted_context->name, coro_switch_count(this));
-
         coro_end_timer(casted_context);
         coro_append_execution_time(casted_context);
 
@@ -114,12 +111,6 @@ coro_handle_file_selection(coro_context *casted_context, struct coro *this, char
         coro_yield();
 
         coro_start_timer(casted_context);
-
-        printf(
-                "%s: switch count after yield: %lld\n",
-                casted_context->name,
-                coro_switch_count(this)
-        );
     }
 }
 
@@ -129,20 +120,20 @@ coro_handle_file_selection(coro_context *casted_context, struct coro *this, char
  * @param pool files_pool
  * @return head of the pool as an iterator pointer
  */
-static __always_inline files_list
+static files_list
 *new_iterator(files_pool *pool)
 {
     return pool->head;
 }
 
-static __always_inline files_list
+static files_list
 *peek_next_file(files_list *iterator)
 {
     if (iterator == NULL) return NULL;
     return iterator->prev;
 }
 
-static __always_inline files_pool
+static files_pool
 *new_files_pool()
 {
     return calloc(1, sizeof(files_pool));
@@ -201,7 +192,7 @@ static void
 }
 
 static file_content
-read_file(char *name)
+*read_file(char *name)
 {
     FILE *file = fopen(name, "r");
 
@@ -216,7 +207,7 @@ read_file(char *name)
 
         if (size == array_capacity)
         {
-            array_capacity *= 2;
+            array_capacity += 10;
             array = realloc_array(array, array_capacity);
         }
 
@@ -225,12 +216,11 @@ read_file(char *name)
 
     assert(fclose(file) == 0);
 
-    file_content parsed_content = {
-            .array = size == 0 ? NULL : realloc_array(array, size),
-            .size = size
-    };
+    file_content *content = malloc(sizeof(file_content));
+    content->array = size == 0 ? NULL : realloc_array(array, size);
+    content->size = size;
 
-    return parsed_content;
+    return content;
 }
 
 static void
@@ -264,7 +254,7 @@ merge(int *array, int *tmp, size_t size, size_t from, size_t mid, size_t to)
 }
 
 static void
-merge_sort(file_content *content, struct coro *this, coro_context *casted_context)
+merge_sort(file_content *content, coro_context *casted_context)
 {
     int *array = content->array;
     size_t size = content->size;
@@ -284,21 +274,12 @@ merge_sort(file_content *content, struct coro *this, coro_context *casted_contex
 
             if (current_execution_time > casted_context->quantum)
             {
-                printf("%s: yield\n", casted_context->name);
-                printf("%s: switch count before yield: %lld\n", casted_context->name, coro_switch_count(this));
-
                 // Force update timer in order to account if-condition and two prints to the console
                 coro_end_timer(casted_context);
-
                 coro_append_execution_time(casted_context);
+
                 coro_yield();
                 coro_start_timer(casted_context);
-
-                printf(
-                        "%s: switch count after yield: %lld\n",
-                        casted_context->name,
-                        coro_switch_count(this)
-                );
             }
         }
     }
@@ -311,42 +292,33 @@ merge_all_files(files_pool *pool, char *merged_file_name)
 
     size_t i, j;
 
-    size_t contents_capacity = 128, contents_size = 0;
-    file_content *contents = malloc(contents_capacity * sizeof(file_content));
+    size_t contents_capacity = pool->size;
+    file_content **contents = malloc(contents_capacity * sizeof(file_content *));
 
-    while (iterator != NULL)
-    {
-        if (contents_size == contents_capacity)
-        {
-            contents_capacity *= 2;
-            contents = realloc_array(contents, contents_capacity);
-        }
-
-        contents[contents_size++] = read_file(iterator->file_name);
+    for (i = 0; iterator != NULL; ++i) {
+        contents[i] = read_file(iterator->file_name);
         iterator = peek_next_file(iterator);
     }
 
-    contents = realloc_array(contents, contents_size);
-
     size_t total_size = 0;
-    for (i = 0; i < contents_size; ++i)
-        total_size += contents[i].size;
+    for (i = 0; i < contents_capacity; ++i)
+        total_size += contents[i]->size;
 
     int *merged = malloc(total_size * sizeof(int));
-    size_t *indices = calloc(contents_size, sizeof(size_t));
+    size_t *indices = calloc(contents_capacity, sizeof(size_t));
 
     for (i = 0; i < total_size; ++i)
     {
         size_t min_index = -1;
         int min_value = INT_MAX;
 
-        for (j = 0; j < contents_size; ++j)
+        for (j = 0; j < contents_capacity; ++j)
         {
-            if (indices[j] < contents[j].size && contents[j].array[indices[j]] < min_value)
+            if (indices[j] < contents[j]->size && contents[j]->array[indices[j]] < min_value)
             {
 
                 min_index = j;
-                min_value = contents[j].array[indices[j]];
+                min_value = contents[j]->array[indices[j]];
             }
         }
 
@@ -355,6 +327,12 @@ merge_all_files(files_pool *pool, char *merged_file_name)
     }
 
     free(indices);
+
+    for (i = 0; i < contents_capacity; ++i) {
+        free(contents[i]->array);
+        free(contents[i]);
+    }
+
     free(contents);
 
     file_content merged_content = {
@@ -372,23 +350,24 @@ merge_all_files(files_pool *pool, char *merged_file_name)
 static int
 coroutine_func_f(void *context)
 {
-    struct coro *this = coro_this();
     coro_context *casted_context = (coro_context *) context;
 
     coro_start_timer(casted_context);
 
     printf("Started coroutine %s\n", casted_context->name);
-    printf("%s: switch count %lld\n", casted_context->name, coro_switch_count(this));
 
     char *file_name;
     while ((file_name = poll_next_file(casted_context->pool)) != NULL)
     {
 
-        coro_handle_file_selection(casted_context, this, file_name);
-        file_content content = read_file(file_name);
-        merge_sort(&content, this, casted_context);
+        coro_handle_file_selection(casted_context, file_name);
+        file_content *content = read_file(file_name);
+        merge_sort(content, casted_context);
 
-        write_file(&content, file_name);
+        write_file(content, file_name);
+
+        free(content->array);
+        free(content);
     }
 
     coro_end_timer(casted_context);
@@ -409,7 +388,7 @@ main(int argc, char **argv)
     files_pool *pool = new_files_pool();
     files_pool *copy_pool = new_files_pool();
 
-    for (int i = 1; i < argc - 2; ++i)
+    for (int i = 3; i < argc - 1; ++i)
     {
         pool_append_file(argv[i], pool);
         pool_append_file(argv[i], copy_pool);
@@ -418,10 +397,10 @@ main(int argc, char **argv)
     coro_sched_init();
 
     // Bonus task #2
-    size_t coro_count = strtoull(argv[argc - 2], NULL, 10);
+    size_t coro_count = strtoull(argv[1], NULL, 10);
 
     // Bonus task #1
-    time_t quantum = (time_t) ((double) strtoull(argv[argc - 1], NULL, 10) / (double) coro_count * 10e3);
+    time_t quantum = (time_t) ((double) strtoull(argv[2], NULL, 10) / (double) coro_count * 10e3);
 
     for (size_t i = 0; i < coro_count; ++i)
     {
