@@ -45,7 +45,7 @@ struct coro_context
     struct timespec start_time, end_time;
 
     /** execution_time += end_time - start_time */
-    time_t execution_time;
+    size_t execution_time;
 
     /** Quantum T / N for bonus task */
     time_t quantum;
@@ -85,6 +85,7 @@ coro_end_timer(coro_context *context)
 static void
 coro_append_execution_time(coro_context *context)
 {
+    context->execution_time += context->end_time.tv_sec * 10e9 - context->start_time.tv_sec * 10e9;
     context->execution_time += context->end_time.tv_nsec - context->start_time.tv_nsec;
 
     memset(&context->start_time, 0, sizeof(context->start_time));
