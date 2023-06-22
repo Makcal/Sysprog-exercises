@@ -271,7 +271,8 @@ merge_sort(file_content *content, coro_context *casted_context)
 
             coro_end_timer(casted_context);
             time_t current_execution_time
-                    = casted_context->end_time.tv_nsec - casted_context->start_time.tv_nsec;
+                    = casted_context->end_time.tv_nsec - casted_context->start_time.tv_nsec +
+                      10e9 * (casted_context->end_time.tv_sec - casted_context->start_time.tv_sec);
 
             if (current_execution_time > casted_context->quantum)
             {
