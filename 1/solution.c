@@ -85,7 +85,7 @@ coro_end_timer(coro_context *context)
 static void
 coro_append_execution_time(coro_context *context)
 {
-    context->execution_time += context->end_time.tv_sec * 10e9 - context->start_time.tv_sec * 10e9;
+    context->execution_time += context->end_time.tv_sec * 1e9 - context->start_time.tv_sec * 1e9;
     context->execution_time += context->end_time.tv_nsec - context->start_time.tv_nsec;
 
     memset(&context->start_time, 0, sizeof(context->start_time));
@@ -272,7 +272,7 @@ merge_sort(file_content *content, coro_context *casted_context)
             coro_end_timer(casted_context);
             time_t current_execution_time
                     = casted_context->end_time.tv_nsec - casted_context->start_time.tv_nsec +
-                      10e9 * (casted_context->end_time.tv_sec - casted_context->start_time.tv_sec);
+                      1e9 * (casted_context->end_time.tv_sec - casted_context->start_time.tv_sec);
 
             if (current_execution_time > casted_context->quantum)
             {
