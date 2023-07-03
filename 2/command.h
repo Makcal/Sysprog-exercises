@@ -1,6 +1,3 @@
-#ifndef MYPROJECT_COMMAND_H
-#define MYPROJECT_COMMAND_H
-
 #include <stdbool.h>
 #include "utils.h"
 
@@ -31,5 +28,3 @@ int
 pipe_list_exec(pipe_list *list);
 
 int entry_list_exec(entry_list *list);
-
-#endif //MYPROJECT_COMMAND_H
