@@ -5,8 +5,13 @@
 #include <stdio.h>
 #include "command.h"
 
-#define READ_END  0
-#define WRITE_END 1
+#define READ_END            0
+#define WRITE_END           1
+
+#define RUN_AND_CHAIN       000
+#define AND_CHAIN_FAILED    001
+#define CAUGHT_OR_ONLY      010
+#define EXEC_AFTER_OR       (CAUGHT_OR_ONLY | AND_CHAIN_FAILED)
 
 static void
 do_command_exec(command *cmd)
@@ -29,29 +34,11 @@ do_command_exec(command *cmd)
 }
 
 int
-single_command_exec(command *cmd)
-{
-    pid_t pid = fork();
-    assert_true(pid >= 0, "Error forking in single_command_exec()");
-
-    if (pid == 0)
-        do_command_exec(cmd);
-    else
-    {
-        int code;
-        assert_true(waitpid(pid, &code, 0) != -1, "Error in waitpid() in single_command_exec()");
-        return WEXITSTATUS(code);
-    }
-
-    return EXIT_SUCCESS;
-}
-
-int
 pipe_list_exec(pipe_list *list)
 {
     int previous_pipe[2], current_pipe[2];
     pid_t children[list->size];
-    int final_exit_code = EXIT_FAILURE, code;
+    int code = EXIT_FAILURE;
     size_t i;
 
     for (i = 0; i < list->size; ++i)
@@ -88,10 +75,49 @@ pipe_list_exec(pipe_list *list)
         assert_true(waitpid(children[i], &code, 0) >= 0, "Error in waitpid() in pipe_list_exec()");
 
         if (WIFEXITED(code))
-            final_exit_code &= WEXITSTATUS(code);
+            code = WEXITSTATUS(code);
         else if (WIFSIGNALED(code))
-            final_exit_code = EXIT_FAILURE;
+            code = EXIT_FAILURE;
     }
 
-    return final_exit_code;
+    return code;
+}
+
+int entry_list_exec(entry_list *list)
+{
+    int code = EXIT_SUCCESS;
+    int execution_mode = RUN_AND_CHAIN;
+    entry *ent;
+
+    for (size_t i = 0; i < list->size; ++i)
+    {
+        ent = list->items[i];
+        switch (ent->item_type)
+        {
+            case ENTRY_PIPE_LIST:
+                if (execution_mode == RUN_AND_CHAIN)
+                    code = pipe_list_exec(ent->item);
+                else if (execution_mode == EXEC_AFTER_OR)
+                {
+                    code = pipe_list_exec(ent->item);
+                    execution_mode = RUN_AND_CHAIN;
+                }
+
+                if (code != EXIT_SUCCESS)
+                    execution_mode = AND_CHAIN_FAILED;
+
+                break;
+            case ENTRY_AND:
+                break;
+            case ENTRY_OR:
+                execution_mode |= CAUGHT_OR_ONLY;
+                break;
+
+            default:
+                perror("Invalid entry type");
+                exit(EXIT_FAILURE);
+        }
+    }
+
+    return code;
 }

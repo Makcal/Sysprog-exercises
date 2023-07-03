@@ -4,14 +4,14 @@
 #include <stdbool.h>
 #include "utils.h"
 
-#define ENTRY_COMMAND   0
-#define ENTRY_AND       1
-#define ENTRY_OR        2
-#define ENTRY_EXIT_CODE 3
+#define ENTRY_AND       0
+#define ENTRY_OR        1
+#define ENTRY_PIPE_LIST 2
 
 typedef struct command command;
+typedef struct entry entry;
 typedef struct list pipe_list;
-typedef struct command_list command_list;
+typedef struct list entry_list;
 
 struct command
 {
@@ -21,24 +21,15 @@ struct command
     char *output_file_name;
 };
 
-
-struct command_list
+struct entry
 {
-    void *entries;
-    int *entries_types;
-    size_t size;
+    void *item;
+    int item_type;
 };
-
-int
-single_command_exec(command *cmd);
 
 int
 pipe_list_exec(pipe_list *list);
 
-//void
-//command_list_add(command_list *list, void *entry, int type);
-//
-//void
-//command_list_exec(command_list *list);
+int entry_list_exec(entry_list *list);
 
 #endif //MYPROJECT_COMMAND_H

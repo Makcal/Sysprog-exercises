@@ -1,72 +1,64 @@
 #include <stdio.h>
 #include <string.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <limits.h>
 #include "command.h"
-
-static void
-print_prompt(void)
-{
-    // Get username
-    const long USERNAME_LENGTH = sysconf(_SC_LOGIN_NAME_MAX);
-    char username[USERNAME_LENGTH];
-    getlogin_r(username, USERNAME_LENGTH);
-
-    // Get hostname
-    char hostname[HOST_NAME_MAX];
-    gethostname(hostname, HOST_NAME_MAX);
-
-    // Get current working directory
-    char cwd[PATH_MAX];
-    getcwd(cwd, PATH_MAX);
-
-    // Get $HOME path
-    const char *home_path = getenv("HOME");
-    size_t home_path_length = strlen(home_path);
-
-    // Get privileges
-    char privilege = geteuid() ? '$' : '#';
-
-    // If a path is inside home directory, then replace home path with "~"
-    if (strncmp(home_path, cwd, home_path_length) == 0 && cwd[home_path_length] == '/')
-        printf("[%s@%s ~%s]%c ", username, hostname, cwd + home_path_length, privilege);
-    else
-        printf("[%s@%s %s]%c ", username, hostname, cwd, privilege);
-}
 
 int
 main(void)
 {
-    print_prompt();
+    char *tr[2] = {"true", NULL};
+    char *fl[2] = {"false", NULL};
 
-    char *argv1[3] = {"cat", "d", NULL};
-    char *argv2[4] = {"ls", "-a", "/", NULL};
-    char *argv3[3] = {"grep", "lib", NULL};
+    command cmd1 = {
+            .argv = tr,
+            .output_file_name = NULL,
+            .is_appending_output = false
+    };
 
-    command cmd1;
-    memset(&cmd1, 0, sizeof(cmd1));
+    command cmd2 = {
+            .argv = fl,
+            .output_file_name = NULL,
+            .is_appending_output = false
+    };
 
-    command cmd2;
-    memset(&cmd2, 0, sizeof(cmd2));
+    pipe_list lst1 = list_new();
+    list_add(&lst1, &cmd1);
 
-    command cmd3;
-    memset(&cmd3, 0, sizeof(cmd3));
+    pipe_list lst2 = list_new();
+    list_add(&lst2, &cmd2);
 
-    cmd1.argv = argv1;
+    entry and = {
+            .item = "&&",
+            .item_type = ENTRY_AND
+    };
 
-    cmd2.argv = argv2;
+    entry or = {
+            .item = "||",
+            .item_type = ENTRY_OR
+    };
 
-    cmd3.argv = argv3;
-    cmd3.output_file_name = "test.txt";
+    entry elist1 = {
+            .item = &lst1,
+            .item_type = ENTRY_PIPE_LIST
+    };
 
+    entry elist2 = {
+            .item = &lst2,
+            .item_type = ENTRY_PIPE_LIST
+    };
 
-    pipe_list list = list_new();
-    list_add(&list, &cmd1);
-    list_add(&list, &cmd2);
-    list_add(&list, &cmd3);
+    entry_list final_list = list_new();
+    list_add(&final_list, &elist2);
+    list_add(&final_list, &and);
+    list_add(&final_list, &elist2);
+    list_add(&final_list, &and);
+    list_add(&final_list, &elist2);
+    list_add(&final_list, &or);
+    list_add(&final_list, &elist2);
+    list_add(&final_list, &and);
+    list_add(&final_list, &elist1);
 
-    pipe_list_exec(&list);
+    int code = entry_list_exec(&final_list);
+    printf("%d\n", code);
 
-    return 0;
+    return code;
 }
