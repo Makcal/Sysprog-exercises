@@ -74,9 +74,9 @@ pipe_list_exec(pipe_list *list)
     {
         assert_true(waitpid(children[i], &code, 0) >= 0, "Error in waitpid() in pipe_list_exec()");
 
-        if (WIFEXITED(code))
-            code = WEXITSTATUS(code);
-        else if (WIFSIGNALED(code))
+        code = WEXITSTATUS(code);
+
+        if (WIFSIGNALED(code))
             code = EXIT_FAILURE;
     }
 
