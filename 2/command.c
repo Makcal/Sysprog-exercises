@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <fcntl.h>
 #include <stdio.h>
+#include <limits.h>
 #include "command.h"
 
 #define READ_END            0
@@ -38,7 +39,7 @@ pipe_list_exec(pipe_list *list)
 {
     int previous_pipe[2], current_pipe[2];
     pid_t children[list->size];
-    int code = EXIT_FAILURE;
+    int code = INT_MAX;
     size_t i;
 
     for (i = 0; i < list->size; ++i)
@@ -73,11 +74,7 @@ pipe_list_exec(pipe_list *list)
     for (i = 0; i < list->size; ++i)
     {
         assert_true(waitpid(children[i], &code, 0) >= 0, "Error in waitpid() in pipe_list_exec()");
-
         code = WEXITSTATUS(code);
-
-        if (WIFSIGNALED(code))
-            code = EXIT_FAILURE;
     }
 
     return code;

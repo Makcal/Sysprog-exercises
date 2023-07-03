@@ -5,7 +5,7 @@
 int
 main(void)
 {
-    char *tr[2] = {"true", NULL};
+    char *tr[3] = {"ls", "/400", NULL};
     char *fl[2] = {"false", NULL};
 
     command cmd1 = {
@@ -25,6 +25,9 @@ main(void)
 
     pipe_list lst2 = list_new();
     list_add(&lst2, &cmd2);
+
+    int res = pipe_list_exec(&lst1);
+    printf("pipe_list: %d\n", res);
 
     entry and = {
             .item = "&&",
