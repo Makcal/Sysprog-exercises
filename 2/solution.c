@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
-#include "command.h"
+#include "pipe_list.h"
+#include "entry.h"
 
 int
 main(void)
@@ -22,9 +23,11 @@ main(void)
 
     pipe_list lst1 = list_new();
     list_add(&lst1, &cmd1);
+    list_trim(&lst1);
 
     pipe_list lst2 = list_new();
     list_add(&lst2, &cmd2);
+    list_trim(&lst2);
 
     int res = pipe_list_exec(&lst1);
     printf("pipe_list: %d\n", res);
@@ -59,6 +62,8 @@ main(void)
     list_add(&final_list, &elist2);
     list_add(&final_list, &and);
     list_add(&final_list, &elist1);
+
+    list_trim(&final_list);
 
     int code = entry_list_exec(&final_list);
     printf("%d\n", code);

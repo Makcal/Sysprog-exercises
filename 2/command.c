@@ -1,21 +1,11 @@
 #include <unistd.h>
-#include <sys/wait.h>
 #include <stdlib.h>
 #include <fcntl.h>
 #include <stdio.h>
-#include <limits.h>
 #include "command.h"
 
-#define READ_END            0
-#define WRITE_END           1
-
-#define RUN_AND_CHAIN       000
-#define AND_CHAIN_FAILED    001
-#define CAUGHT_OR_ONLY      010
-#define EXEC_AFTER_OR       (CAUGHT_OR_ONLY | AND_CHAIN_FAILED)
-
-static void
-do_command_exec(command *cmd)
+void
+command_exec(command *cmd)
 {
     if (cmd->output_file_name != NULL)
     {
@@ -34,87 +24,19 @@ do_command_exec(command *cmd)
     exit(EXIT_FAILURE);
 }
 
-int
-pipe_list_exec(pipe_list *list)
+void
+command_free(command *cmd)
 {
-    int previous_pipe[2], current_pipe[2];
-    pid_t children[list->size];
-    int code = INT_MAX;
-    size_t i;
-
-    for (i = 0; i < list->size; ++i)
+    if (cmd->argv != NULL)
     {
-        if (i < list->size - 1)
-            assert_true(pipe(current_pipe) != -1, "Error making pipe in pipe_list_exec()");
+        for (size_t i = 0; cmd->argv[i] != NULL; ++i)
+            free(cmd->argv[i]);
 
-        pid_t pid = fork();
-        assert_true(pid != -1, "Error forking in pipe_list_exec()");
-
-        if (pid == 0)
-        {
-            if (i < list->size - 1)
-                dup2(current_pipe[WRITE_END], STDOUT_FILENO);
-            if (i > 0)
-                dup2(previous_pipe[READ_END], STDIN_FILENO);
-
-            close(current_pipe[READ_END]);
-            do_command_exec(list->items[i]);
-        } else
-        {
-            children[i] = pid;
-
-            if (i > 0)
-                close(previous_pipe[READ_END]);
-
-            close(current_pipe[WRITE_END]);
-            previous_pipe[READ_END] = current_pipe[READ_END];
-        }
+        free(cmd->argv);
     }
 
-    for (i = 0; i < list->size; ++i)
-    {
-        assert_true(waitpid(children[i], &code, 0) >= 0, "Error in waitpid() in pipe_list_exec()");
-        code = WEXITSTATUS(code);
-    }
+    if (cmd->output_file_name != NULL)
+        free(cmd->output_file_name);
 
-    return code;
-}
-
-int entry_list_exec(entry_list *list)
-{
-    int code = EXIT_SUCCESS;
-    int execution_mode = RUN_AND_CHAIN;
-    entry *ent;
-
-    for (size_t i = 0; i < list->size; ++i)
-    {
-        ent = list->items[i];
-        switch (ent->item_type)
-        {
-            case ENTRY_PIPE_LIST:
-                if (execution_mode == RUN_AND_CHAIN)
-                    code = pipe_list_exec(ent->item);
-                else if (execution_mode == EXEC_AFTER_OR)
-                {
-                    code = pipe_list_exec(ent->item);
-                    execution_mode = RUN_AND_CHAIN;
-                }
-
-                if (code != EXIT_SUCCESS)
-                    execution_mode = AND_CHAIN_FAILED;
-
-                break;
-            case ENTRY_AND:
-                break;
-            case ENTRY_OR:
-                execution_mode |= CAUGHT_OR_ONLY;
-                break;
-
-            default:
-                perror("Invalid entry type");
-                exit(EXIT_FAILURE);
-        }
-    }
-
-    return code;
+    free(cmd);
 }
