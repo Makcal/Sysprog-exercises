@@ -8,7 +8,7 @@ static void
 test_open(void)
 {
 	unit_test_start();
-	
+
 	int fd = ufs_open("file", 0);
 	unit_check(fd == -1, "error when no such file");
 	unit_check(ufs_errno() == UFS_ERR_NO_FILE, "errno is 'no_file'");
@@ -205,7 +205,7 @@ test_io(void)
 	ufs_close(fd1);
 	bool ok = true;
 	for (size_t i = 0; i < some_size && ok; ++i)
-		ok = ok && buffer[i] == 'a' + i % ('z' - 'a' + 1);
+		ok = ok && buffer[i] == 'a' + (char) (i % ('z' - 'a' + 1));
 	unit_check(ok, "data is correct");
 
 	ufs_delete("file");
