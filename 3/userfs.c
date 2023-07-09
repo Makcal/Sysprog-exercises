@@ -81,24 +81,6 @@ static int file_descriptor_capacity = 0;
 
 #define max(a, b) (a) < (b) ? (b) : (a)
 
-static void
-assert_true(bool condition, const char *error_message)
-{
-    if (!condition)
-    {
-        perror(error_message);
-        exit(EXIT_FAILURE);
-    }
-}
-
-static void
-*checked_realloc(void *ptr, size_t new_capacity)
-{
-    void *updated_ptr = realloc(ptr, new_capacity * sizeof(void *));
-    assert_true(updated_ptr != NULL, "Error reallocating ptr");
-    return updated_ptr;
-}
-
 #define handle_err_no_file(fd)                                                              \
     do {                                                                                    \
         if ((fd) < 0 || (fd) > file_descriptor_capacity || !file_descriptors[(fd)])         \
@@ -116,6 +98,33 @@ static void
             return -1;                                                                      \
         }                                                                                   \
     } while (false)
+
+#define handle_err_no_mem(new_size)                                                         \
+    do {                                                                                    \
+        if ((new_size) > MAX_FILE_SIZE)                                                     \
+        {                                                                                   \
+            ufs_error_code = UFS_ERR_NO_MEM;                                                \
+            return -1;                                                                      \
+        }                                                                                   \
+    } while (false)
+
+static void
+assert_true(bool condition, const char *error_message)
+{
+    if (!condition)
+    {
+        perror(error_message);
+        exit(EXIT_FAILURE);
+    }
+}
+
+static void
+*checked_realloc(void *ptr, size_t new_capacity)
+{
+    void *updated_ptr = realloc(ptr, new_capacity * sizeof(void *));
+    assert_true(updated_ptr != NULL, "Error reallocating ptr");
+    return updated_ptr;
+}
 
 static int
 create_filedesc(file *f, int permissions)
@@ -180,11 +189,21 @@ static block
     return new_block;
 }
 
+#define RETURN_NEXT true
+#define RETURN_PREV false
+
 static block
-*free_block(block *b)
+*free_block(block *b, bool return_next)
 {
     free(b->memory);
-    block *to_return = b->next;
+    block *to_return = return_next ? b->next : b->prev;
+
+    if (to_return)
+    {
+        if (return_next) to_return->prev = NULL;
+        else to_return->next = NULL;
+    }
+
     free(b);
     return to_return;
 }
@@ -211,7 +230,7 @@ static file
 static void
 free_file(file *f)
 {
-    for (block *block = f->block_list; block; block = free_block(block));
+    for (block *block = f->block_list; block; block = free_block(block, RETURN_NEXT));
     free(f->name);
     free(f);
 }
@@ -355,7 +374,7 @@ ufs_close(int fd)
     file_descriptors[fd] = NULL;
 
     ufs_error_code = UFS_ERR_NO_ERR;
-    return ufs_error_code;
+    return 0;
 }
 
 int
@@ -407,7 +426,71 @@ ufs_destroy(void)
 int
 ufs_resize(int fd, size_t new_size)
 {
-    (void) new_size;
     handle_err_no_file(fd);
+    handle_err_no_mem(new_size);
+
+    file *f = file_descriptors[fd]->file;
+    int i;
+
+    int new_blocks_count = (int) new_size / BLOCK_SIZE;
+
+    // Ceiling in case when we need additional block
+    // for storing some portion of data with size less than
+    // BLOCK_SIZE
+    int initial_blocks_count = f->blocks_count;
+    if (new_size % BLOCK_SIZE != 0)
+        ++new_blocks_count;
+
+    if (new_blocks_count >= initial_blocks_count)
+    {
+        for (i = f->blocks_count; i < new_blocks_count; ++i)
+            add_block(f);
+
+        ufs_error_code = UFS_ERR_NO_ERR;
+        return 0;
+    }
+
+    for (i = new_blocks_count; i < initial_blocks_count; ++i)
+    {
+        if (f->last_block->prev)
+        {
+            f->last_block = free_block(f->last_block, RETURN_PREV);
+            --f->blocks_count;
+        }
+
+        if (!f->last_block)
+            f->block_list = NULL;
+    }
+
+    int occupied_remainder = (int) new_size % BLOCK_SIZE;
+    if (new_size > 0 && !occupied_remainder)
+        occupied_remainder += BLOCK_SIZE;
+
+    if (f->last_block)
+        f->last_block->occupied = occupied_remainder;
+
+    filedesc *desc;
+    int new_offset;
+
+    for (i = 0; i < file_descriptor_capacity; ++i)
+    {
+        desc = file_descriptors[i];
+        if (desc && desc->file == f)
+        {
+            if (desc->current_block_index >= f->blocks_count)
+            {
+                desc->current_block_index = f->blocks_count - 1;
+                desc->current_block = f->last_block;
+            }
+
+            if (desc->current_block_index == f->blocks_count - 1)
+            {
+                new_offset = f->last_block ? f->last_block->occupied : 0;
+                desc->offset = min(desc->offset, new_offset);
+            }
+        }
+    }
+
+    ufs_error_code = UFS_ERR_NO_ERR;
     return 0;
 }
