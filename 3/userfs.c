@@ -212,6 +212,8 @@ static void
 free_file(file *f)
 {
     for (block *block = f->block_list; block; block = free_block(block));
+    free(f->name);
+    free(f);
 }
 
 enum ufs_error_code
@@ -388,11 +390,24 @@ ufs_delete(const char *filename)
 void
 ufs_destroy(void)
 {
+    for (file *current_file = file_list; current_file;)
+    {
+        file *to_remove = current_file;
+        current_file = current_file->next;
+        free_file(to_remove);
+    }
+
+    for (int fd = 0; fd < file_descriptor_capacity; ++fd)
+        if (file_descriptors[fd])
+            free(file_descriptors[fd]);
+
+    free(file_descriptors);
 }
 
-//int
-//ufs_resize(int fd, size_t new_size)
-//{
-//    handle_err_no_file(fd);
-//    return 0;
-//}
+int
+ufs_resize(int fd, size_t new_size)
+{
+    (void) new_size;
+    handle_err_no_file(fd);
+    return 0;
+}
