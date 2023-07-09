@@ -8,3 +8,6 @@ test.o: test.c
 
 userfs.o: userfs.c
 	gcc $(GCC_FLAGS) -c userfs.c -o userfs.o
+
+clean:
+	rm a.out test.o userfs.o
