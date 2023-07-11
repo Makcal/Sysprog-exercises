@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include "entry.h"
-#include "pipe_list.h"
-#include "utils.h"
+#include "command.h"
 
 void
 entry_free(entry *entry)
@@ -12,13 +11,13 @@ entry_free(entry *entry)
         case ENTRY_OR:
             break;  // entry->item for them is NULL
         case ENTRY_PIPE_LIST:
-            list_free((pipe_list *) entry->item, command_free);
+            list_free((list *) entry->item, command_free);
     }
 
     free(entry);
 }
 
-int entry_list_exec(entry_list *list)
+int entry_list_exec(list *list)
 {
     int code = EXIT_SUCCESS;
     int execution_mode = RUN_AND_CHAIN;

@@ -1,6 +1,9 @@
 #include <stdbool.h>
 #include "utils.h"
 
+#define READ_END    0
+#define WRITE_END   1
+
 typedef struct
 {
     char **argv;
@@ -10,7 +13,7 @@ typedef struct
 } command;
 
 void
-command_exec(command *cmd);
-
-void
 command_free(command *cmd);
+
+int
+pipe_list_exec(list *list);

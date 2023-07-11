@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include "utils.h"
 
 #define RUN_AND_CHAIN       000
 #define AND_CHAIN_FAILED    001
@@ -15,14 +16,8 @@ typedef struct
     int item_type;
 } entry;
 
-typedef struct
-{
-    entry **items;
-    size_t size, capacity;
-} entry_list;
-
 void
 entry_free(entry *entry);
 
 int
-entry_list_exec(entry_list *list);
+entry_list_exec(list *list);

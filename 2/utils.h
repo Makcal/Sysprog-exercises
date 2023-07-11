@@ -1,5 +1,6 @@
 #include <stdbool.h>
 #include <stdlib.h>
+#pragma once
 
 #define LIST_CAPACITY 4
 
@@ -7,9 +8,15 @@ void assert_true(bool condition, const char *error_message);
 
 void *checked_realloc(void *ptr, size_t new_capacity);
 
-#define list_init(list_ptr, list_type)                                          \
+typedef struct
+{
+    size_t size, capacity;
+    void **items;
+} list;
+
+#define list_init(list_ptr)                                                     \
 do {                                                                            \
-    (list_ptr) = malloc(sizeof(list_type));                                     \
+    (list_ptr) = malloc(sizeof(list));                                          \
     (list_ptr)->size = 0;                                                       \
     (list_ptr)->capacity = LIST_CAPACITY;                                       \
     (list_ptr)->items = malloc(LIST_CAPACITY * sizeof(void *));                 \

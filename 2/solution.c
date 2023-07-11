@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <string.h>
-#include "pipe_list.h"
+#include "command.h"
 #include "entry.h"
 
 int
@@ -22,14 +22,14 @@ main(void)
     command *cmd2 = calloc(1, sizeof(command));
     cmd2->argv = fl;
 
-    pipe_list *lst1;
-    list_init(lst1, pipe_list);
+    list *lst1;
+    list_init(lst1);
 
     list_add(lst1, cmd1);
     list_trim(lst1);
 
-    pipe_list *lst2;
-    list_init(lst2, pipe_list);
+    list *lst2;
+    list_init(lst2);
 
     list_add(lst2, cmd2);
     list_trim(lst2);
@@ -53,8 +53,8 @@ main(void)
     elist1->item = lst2;
     elist1->item_type = ENTRY_PIPE_LIST;
 
-    entry_list *final_list;
-    list_init(final_list, entry_list);
+    list *final_list;
+    list_init(final_list);
     list_add(final_list, elist2);
     list_add(final_list, and);
 //    list_add(final_list, elist2);
