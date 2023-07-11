@@ -14,34 +14,20 @@ typedef struct
     void **items;
 } list;
 
-#define list_init(list_ptr)                                                     \
-do {                                                                            \
-    (list_ptr) = malloc(sizeof(list));                                          \
-    (list_ptr)->size = 0;                                                       \
-    (list_ptr)->capacity = LIST_CAPACITY;                                       \
-    (list_ptr)->items = malloc(LIST_CAPACITY * sizeof(void *));                 \
-} while (false)
+list *
+list_init();
 
-#define list_add(list, item)                                                    \
-do {                                                                            \
-    if ((list)->size == (list)->capacity)                                       \
-    {                                                                           \
-        (list)->capacity += LIST_CAPACITY;                                      \
-        (list)->items = checked_realloc((list)->items, (list)->capacity);       \
-    }                                                                           \
-                                                                                \
-    (list)->items[(list)->size++] = (item);                                     \
-} while (false)
+void
+list_add(list *list_ptr, void *item);
 
-#define list_trim(list)                                                         \
-do {                                                                            \
-    (list)->items = checked_realloc((list)->items, (list)->size);               \
-    (list)->capacity = (list)->size;                                            \
-} while (false)
+void
+list_trim(list *list_ptr);
 
 #define list_free(list, item_cleaner)                                           \
 do {                                                                            \
     for (size_t i = 0; i < (list)->size; ++i)                                   \
         (item_cleaner)((list)->items[i]);                                       \
+                                                                                \
+    free((list)->items);                                                        \
     free((list));                                                               \
 } while (false)

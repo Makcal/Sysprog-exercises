@@ -22,14 +22,12 @@ main(void)
     command *cmd2 = calloc(1, sizeof(command));
     cmd2->argv = fl;
 
-    list *lst1;
-    list_init(lst1);
+    list *lst1 = list_init();
 
     list_add(lst1, cmd1);
     list_trim(lst1);
 
-    list *lst2;
-    list_init(lst2);
+    list *lst2 = list_init();
 
     list_add(lst2, cmd2);
     list_trim(lst2);
@@ -53,8 +51,7 @@ main(void)
     elist1->item = lst2;
     elist1->item_type = ENTRY_PIPE_LIST;
 
-    list *final_list;
-    list_init(final_list);
+    list *final_list = list_init();
     list_add(final_list, elist2);
     list_add(final_list, and);
 //    list_add(final_list, elist2);
