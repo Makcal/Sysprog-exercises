@@ -31,3 +31,10 @@ do {                                                                            
     (list)->items = checked_realloc((list)->items, (list)->size);               \
     (list)->capacity = (list)->size;                                            \
 } while (false)
+
+#define list_free(list, item_cleaner)                                           \
+do {                                                                            \
+    for (size_t i = 0; i < (list)->size; ++i)                                   \
+        (item_cleaner)((list)->items[i]);                                       \
+    free((list));                                                               \
+} while (false)
