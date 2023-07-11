@@ -47,15 +47,3 @@ pipe_list_exec(pipe_list *list)
 
     return code;
 }
-
-void
-pipe_list_free(pipe_list *list)
-{
-    if (list->size > 0)
-    {
-        for (size_t i = 0; list->items[i] != NULL; ++i)
-            command_free(list->items[i]);
-    }
-
-    free(list);
-}

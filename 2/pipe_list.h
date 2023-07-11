@@ -11,6 +11,3 @@ typedef struct
 
 int
 pipe_list_exec(pipe_list *list);
-
-void
-pipe_list_free(pipe_list *list);

@@ -26,6 +26,3 @@ entry_free(entry *entry);
 
 int
 entry_list_exec(entry_list *list);
-
-void
-entry_list_free(entry_list *list);
