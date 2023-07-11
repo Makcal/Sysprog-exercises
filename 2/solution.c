@@ -41,9 +41,9 @@ main(void)
     and->item = NULL;
     and->item_type = ENTRY_AND;
 
-    entry *or = malloc(sizeof(entry));
-    and->item = NULL;
-    and->item_type = ENTRY_OR;
+//    entry *or = malloc(sizeof(entry));
+//    or->item = NULL;
+//    or->item_type = ENTRY_OR;
 
     entry *elist1 = malloc(sizeof(entry));
     elist1->item = lst1;
