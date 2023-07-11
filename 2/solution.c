@@ -21,15 +21,19 @@ main(void)
             .is_appending_output = false
     };
 
-    pipe_list lst1 = list_new();
-    list_add(&lst1, &cmd1);
-    list_trim(&lst1);
+    pipe_list *lst1;
+    list_init(lst1, pipe_list);
 
-    pipe_list lst2 = list_new();
-    list_add(&lst2, &cmd2);
-    list_trim(&lst2);
+    list_add(lst1, &cmd1);
+    list_trim(lst1);
 
-    int res = pipe_list_exec(&lst1);
+    pipe_list *lst2;
+    list_init(lst2, pipe_list);
+
+    list_add(lst2, &cmd2);
+    list_trim(lst2);
+
+    int res = pipe_list_exec(lst1);
     printf("pipe_list: %d\n", res);
 
     entry and = {
@@ -43,29 +47,30 @@ main(void)
     };
 
     entry elist1 = {
-            .item = &lst1,
+            .item = lst1,
             .item_type = ENTRY_PIPE_LIST
     };
 
     entry elist2 = {
-            .item = &lst2,
+            .item = lst2,
             .item_type = ENTRY_PIPE_LIST
     };
 
-    entry_list final_list = list_new();
-    list_add(&final_list, &elist2);
-    list_add(&final_list, &and);
-    list_add(&final_list, &elist2);
-    list_add(&final_list, &and);
-    list_add(&final_list, &elist2);
-    list_add(&final_list, &or);
-    list_add(&final_list, &elist2);
-    list_add(&final_list, &and);
-    list_add(&final_list, &elist1);
+    entry_list *final_list;
+    list_init(final_list, entry_list);
+    list_add(final_list, &elist2);
+    list_add(final_list, &and);
+    list_add(final_list, &elist2);
+    list_add(final_list, &and);
+    list_add(final_list, &elist2);
+    list_add(final_list, &or);
+    list_add(final_list, &elist2);
+    list_add(final_list, &and);
+    list_add(final_list, &elist1);
 
-    list_trim(&final_list);
+    list_trim(final_list);
 
-    int code = entry_list_exec(&final_list);
+    int code = entry_list_exec(final_list);
     printf("%d\n", code);
 
     return code;

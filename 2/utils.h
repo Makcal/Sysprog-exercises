@@ -7,12 +7,13 @@ void assert_true(bool condition, const char *error_message);
 
 void *checked_realloc(void *ptr, size_t new_capacity);
 
-#define list_new()                                                              \
-{                                                                               \
-    .size = 0,                                                                  \
-    .capacity = LIST_CAPACITY,                                                  \
-    .items = malloc(LIST_CAPACITY * sizeof(void *))                             \
-}
+#define list_init(list_ptr, list_type)                                          \
+do {                                                                            \
+    (list_ptr) = malloc(sizeof(list_type));                                     \
+    (list_ptr)->size = 0;                                                       \
+    (list_ptr)->capacity = LIST_CAPACITY;                                       \
+    (list_ptr)->items = malloc(LIST_CAPACITY * sizeof(void *));                 \
+} while (false)
 
 #define list_add(list, item)                                                    \
 do {                                                                            \
