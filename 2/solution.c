@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <string.h>
-#include "command.h"
-#include "entry.h"
+#include "new_entry.h"
+//#include "../utils/heap_help/heap_help.h"
 
 int
 main(void)
@@ -14,13 +14,20 @@ main(void)
 
     char **fl = calloc(2, sizeof(char *));
     fl[0] = calloc(6, sizeof(char));
-    strcpy(fl[0], "false");
+    strcpy(fl[0], "true");
+
+    char **fl2 = calloc(2, sizeof(char *));
+    fl2[0] = calloc(6, sizeof(char));
+    strcpy(fl2[0], "false");
 
     command *cmd1 = calloc(1, sizeof(command));
     cmd1->argv = tr;
 
     command *cmd2 = calloc(1, sizeof(command));
     cmd2->argv = fl;
+
+    command *cmd3 = calloc(1, sizeof(command));
+    cmd3->argv = fl2;
 
     list *lst1 = list_init();
 
@@ -32,41 +39,34 @@ main(void)
     list_add(lst2, cmd2);
     list_trim(lst2);
 
-    int res = pipe_list_exec(lst1);
-    printf("pipe_list: %d\n", res);
+    list *lst3 = list_init();
 
-    entry *and = malloc(sizeof(entry));
-    and->item = NULL;
-    and->item_type = ENTRY_AND;
+    list_add(lst3, cmd3);
+    list_trim(lst3);
 
-//    entry *or = malloc(sizeof(entry));
-//    or->item = NULL;
-//    or->item_type = ENTRY_OR;
+    new_entry *elist1 = malloc(sizeof(new_entry));
+    elist1->pipe_list = lst1;
+    elist1->next_operator_type = ENTRY_NULL;
 
-    entry *elist1 = malloc(sizeof(entry));
-    elist1->item = lst1;
-    elist1->item_type = ENTRY_PIPE_LIST;
+    new_entry *elist2 = malloc(sizeof(new_entry));
+    elist2->pipe_list = lst2;
+    elist2->next_operator_type = ENTRY_AND;
 
-    entry *elist2 = malloc(sizeof(entry));
-    elist1->item = lst2;
-    elist1->item_type = ENTRY_PIPE_LIST;
+    new_entry *elist3 = malloc(sizeof(new_entry));
+    elist3->pipe_list = lst3;
+    elist3->next_operator_type = ENTRY_OR;
 
     list *final_list = list_init();
     list_add(final_list, elist2);
-    list_add(final_list, and);
-//    list_add(final_list, elist2);
-//    list_add(final_list, and);
-//    list_add(final_list, elist2);
-//    list_add(final_list, or);
-//    list_add(final_list, elist2);
-//    list_add(final_list, and);
+    list_add(final_list, elist3);
     list_add(final_list, elist1);
-
     list_trim(final_list);
 
     int code = entry_list_exec(final_list);
     printf("%d\n", code);
 
-    list_free(final_list, entry_free);
+    list_free(final_list, new_entry_free);
+
+//    heaph_get_alloc_count();
     return code;
 }

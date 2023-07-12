@@ -28,15 +28,15 @@ command_exec(command *cmd)
 void
 command_free(command *cmd)
 {
-    if (cmd->argv != NULL)
+    if (cmd->argv)
     {
-        for (size_t i = 0; cmd->argv[i] != NULL; ++i)
+        for (size_t i = 0; cmd->argv[i]; ++i)
             free(cmd->argv[i]);
 
         free(cmd->argv);
     }
 
-    if (cmd->output_file_name != NULL)
+    if (cmd->output_file_name)
         free(cmd->output_file_name);
 
     free(cmd);

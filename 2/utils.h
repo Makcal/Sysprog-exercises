@@ -25,7 +25,7 @@ list_trim(list *list_ptr);
 
 #define list_free(list, item_cleaner)                                           \
 do {                                                                            \
-    for (size_t i = 0; i < (list)->size; ++i)                                   \
+    for (size_t i = 0; i < (list)->capacity; ++i)                               \
         (item_cleaner)((list)->items[i]);                                       \
                                                                                 \
     free((list)->items);                                                        \
