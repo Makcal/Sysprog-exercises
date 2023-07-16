@@ -28,6 +28,8 @@ struct thread_task
 
     pthread_mutex_t mutex;
     pthread_cond_t is_finished;
+
+    atomic_bool is_detached;
 };
 
 struct thread_pool
@@ -131,13 +133,21 @@ static void
         atomic_fetch_add(&pool->running_tasks_count, 1);
 
         task->result = task->function(task->arg);
-        atomic_store(&task->status, TASK_STATUS_FINISHED);
-        atomic_fetch_sub(&pool->running_tasks_count, 1);
 
         pthread_mutex_lock(&task->mutex);
-        pthread_cond_broadcast(&task->is_finished);
-        pthread_mutex_unlock(&task->mutex);
+        if (atomic_load(&task->is_detached))
+        {
+            atomic_store(&task->status, TASK_STATUS_FREE);
+            pthread_mutex_unlock(&task->mutex);
+            thread_task_delete(task);
+        } else
+        {
+            atomic_store(&task->status, TASK_STATUS_FINISHED);
+            pthread_cond_broadcast(&task->is_finished);
+            pthread_mutex_unlock(&task->mutex);
+        }
 
+        atomic_fetch_sub(&pool->running_tasks_count, 1);
     }
 }
 
@@ -204,7 +214,9 @@ thread_task_new(thread_task **task, thread_task_f function, void *arg)
     (*task) = malloc(sizeof(struct thread_task));
     (*task)->function = function;
     (*task)->arg = arg;
+
     atomic_init(&(*task)->status, TASK_STATUS_FREE);
+    atomic_init(&(*task)->is_detached, false);
 
     pthread_mutex_init(&(*task)->mutex, NULL);
     pthread_cond_init(&(*task)->is_finished, NULL);
@@ -275,9 +287,23 @@ thread_task_timed_join(thread_task *task, double timeout, void **result)
 int
 thread_task_detach(thread_task *task)
 {
-    /* IMPLEMENT THIS FUNCTION */
-    (void) task;
-    return TPOOL_ERR_NOT_IMPLEMENTED;
+    if (atomic_load(&task->status) == TASK_STATUS_FREE)
+        return TPOOL_ERR_TASK_NOT_PUSHED;
+
+    pthread_mutex_lock(&task->mutex);
+
+    if (atomic_load(&task->status) == TASK_STATUS_FINISHED)
+    {
+        atomic_store(&task->status, TASK_STATUS_FREE);
+        pthread_mutex_unlock(&task->mutex);
+        thread_task_delete(task);
+    } else
+    {
+        atomic_store(&task->is_detached, true);
+        pthread_mutex_unlock(&task->mutex);
+    }
+
+    return EXIT_SUCCESS;
 }
 
 #endif
