@@ -2,11 +2,17 @@
 #include <pthread.h>
 #include <stdatomic.h>
 #include <stdlib.h>
+#include <errno.h>
+#include <time.h>
+#include <math.h>
 
 typedef struct thread_task thread_task;
 typedef struct thread_pool thread_pool;
 typedef struct thread_args thread_args;
 typedef struct queue queue;
+
+typedef struct timespec timespec;
+typedef struct timeval timeval;
 
 enum
 {
@@ -151,6 +157,24 @@ static void
     }
 }
 
+static void
+init_timespec(timespec *ts, double timeout)
+{
+    clock_gettime(CLOCK_REALTIME, ts);
+
+    double int_part;
+    double frac_part = modf(timeout, &int_part) * 1e9;
+
+    ts->tv_sec += (time_t) int_part;
+    ts->tv_nsec += (long) frac_part;
+
+    if (ts->tv_nsec >= 1000000000L)
+    {
+        ts->tv_sec += 1;
+        ts->tv_nsec -= 1000000000L;
+    }
+}
+
 int
 thread_pool_new(int max_thread_count, thread_pool **pool)
 {
@@ -273,11 +297,30 @@ thread_task_delete(thread_task *task)
 int
 thread_task_timed_join(thread_task *task, double timeout, void **result)
 {
-    /* IMPLEMENT THIS FUNCTION */
-    (void) task;
-    (void) timeout;
-    (void) result;
-    return TPOOL_ERR_NOT_IMPLEMENTED;
+    if (timeout < 0)
+        return TPOOL_ERR_TIMEOUT;
+
+    if (atomic_load(&task->status) == TASK_STATUS_FREE)
+        return TPOOL_ERR_TASK_NOT_PUSHED;
+
+    pthread_mutex_lock(&task->mutex);
+
+    timespec ts;
+    init_timespec(&ts, timeout);
+
+    int wait_rc = EXIT_SUCCESS;
+    if (atomic_load(&task->status) != TASK_STATUS_FINISHED)
+        wait_rc = pthread_cond_timedwait(&task->is_finished, &task->mutex, &ts);
+
+    pthread_mutex_unlock(&task->mutex);
+
+    if (wait_rc == ETIMEDOUT)
+        return TPOOL_ERR_TIMEOUT;
+
+    atomic_store(&task->status, TASK_STATUS_FINISHED);
+    *result = task->result;
+
+    return EXIT_SUCCESS;
 }
 
 #endif
