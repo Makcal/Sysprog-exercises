@@ -8,3 +8,6 @@ test.o: test.c
 
 thread_pool.o: thread_pool.c
 	gcc $(GCC_FLAGS) -c thread_pool.c -o thread_pool.o
+
+clean:
+	rm a.out thread_pool.o test.o
