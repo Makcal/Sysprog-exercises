@@ -9,7 +9,10 @@ static char
     argv[right_bound + 1] = NULL;
 
     for (size_t i = left_bound; i <= right_bound; ++i)
-        argv[i - left_bound] = strdup(tokens->items[i]);
+    {
+        token *tok = tokens->items[i];
+        argv[i - left_bound] = strdup(tok->value);
+    }
 
     return argv;
 }
@@ -21,12 +24,14 @@ static program
 
     for (size_t i = left_bound; i <= right_bound; ++i)
     {
-        char *token = tokens->items[i];
-        if (is_redirection(token))
+        token *tok = tokens->items[i];
+        if (is_redirection(tok->type))
         {
             prg->argv = init_argv(tokens, left_bound, i - 1);
-            prg->is_appending_output = is_appending(token);
-            prg->output_file_name = strdup(tokens->items[i + 1]);
+            prg->is_appending_output = is_redirection_append(tok->type);
+
+            token *file_token =  tokens->items[i + 1];
+            prg->output_file_name = strdup(file_token->value);
 
             return prg;
         }
@@ -47,8 +52,8 @@ static list
 
     for (size_t i = left_bound; i <= right_bound; ++i)
     {
-        char *token = tokens->items[i];
-        if (is_pipeline(token))
+        token *tok = tokens->items[i];
+        if (is_pipeline(tok->type))
         {
             list_add(pipe_list, init_program(tokens, program_left_bound, i - 1));
             program_left_bound = i + 1;
@@ -73,8 +78,11 @@ static command_entry
     else
     {
         entry->pipe_list = init_pipe_list(tokens, left_bound, right_bound - 1);
-        char *operator = tokens->items[right_bound];
-        entry->next_operator_type = str_equal(operator, AND_OPERATOR) ? ENTRY_AND : ENTRY_OR;
+
+        token *tok = tokens->items[right_bound];
+        int operator_type = tok->type;
+
+        entry->next_operator_type = is_logical_and(operator_type) ? ENTRY_AND : ENTRY_OR;
     }
 
     return entry;
@@ -93,15 +101,14 @@ evaluate(list *tokens)
 
     for (size_t i = 0; i < tokens->size; ++i)
     {
-        char *token = tokens->items[i];
-
-        if (is_logical(token))
+        token *tok = tokens->items[i];
+        if (is_logical(tok->type))
         {
             list_add(command, init_command_entry(tokens, left_bound, i, false));
             left_bound = i + 1;
         } else if (i == tokens->size - 1)
         {
-            if (is_background(token))
+            if (is_background_execution(tok->type))
                 is_background_execution = true;
             else
                 list_add(command, init_command_entry(tokens, left_bound, i, true));
