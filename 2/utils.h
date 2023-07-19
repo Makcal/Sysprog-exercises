@@ -1,6 +1,10 @@
 #include <stdbool.h>
 #include <stdlib.h>
+#include <string.h>
+
 #pragma once
+
+#define str_equal(str1, str2) strcmp((str1), (str2)) == 0
 
 #define LIST_CAPACITY 4
 
