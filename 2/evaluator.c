@@ -6,7 +6,7 @@ static char
 **init_argv(list *tokens, size_t left_bound, size_t right_bound)
 {
     char **argv = malloc((2 + right_bound - left_bound) * sizeof(char *));
-    argv[right_bound + 1] = NULL;
+    argv[right_bound - left_bound + 1] = NULL;
 
     for (size_t i = left_bound; i <= right_bound; ++i)
     {

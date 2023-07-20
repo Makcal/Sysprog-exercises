@@ -39,5 +39,8 @@ typedef struct
     int type;
 } token;
 
+void
+token_free(token *tok);
+
 list
-*parse(const char *input_line);
+*tokenize_command();

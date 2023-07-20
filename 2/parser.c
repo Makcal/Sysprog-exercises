@@ -1,8 +1,16 @@
 #include "parser.h"
 
-list
-*parse(const char *input_line)
+void
+token_free(token *tok)
 {
-    (void) input_line;
+    if (tok->value)
+        free(tok->value);
+
+    free(tok);
+}
+
+list
+*tokenize_command()
+{
     return NULL;
 }

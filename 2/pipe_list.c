@@ -5,6 +5,18 @@
 #include <stdio.h>
 #include "pipe_list.h"
 
+static inline int
+change_directory(program *prg)
+{
+    return chdir(prg->argv[1] ? prg->argv[1] : getenv("HOME"));
+}
+
+static inline void
+program_exit(program *prg)
+{
+    exit(prg->argv[1] ? (int) strtol(prg->argv[1], NULL, 10) : EXIT_SUCCESS);
+}
+
 static void
 program_exec(program *prg)
 {
@@ -19,6 +31,11 @@ program_exec(program *prg)
         assert_true(dup2(file, STDOUT_FILENO) >= 0, "Error during dup2() in do_command_exec()");
         assert_true(close(file) >= 0, "Error closing file in do_command_exec()");
     }
+
+    if (str_equal(prg->argv[0], "cd"))
+        exit(change_directory(prg));
+    else if (str_equal(prg->argv[0], "exit"))
+        program_exit(prg);
 
     execvp(prg->argv[0], prg->argv);
     fputs("execvp() failed", stderr);
@@ -49,6 +66,16 @@ pipe_list_exec(list *pipe_list)
     pid_t children[pipe_list->size];
     int code = EXIT_SUCCESS;
     size_t i;
+
+    if (pipe_list->size == 1)
+    {
+        program *prg = pipe_list->items[0];
+
+        if (str_equal(prg->argv[0], "cd"))
+            return change_directory(prg);
+        else if (str_equal(prg->argv[0], "exit"))
+            program_exit(prg);
+    }
 
     for (i = 0; i < pipe_list->size; ++i)
     {
