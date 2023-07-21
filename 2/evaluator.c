@@ -109,7 +109,11 @@ evaluate(list *tokens)
         } else if (i == tokens->size - 1)
         {
             if (is_background_execution(tok->type))
+            {
                 is_background_execution = true;
+                list_add(command, init_command_entry(tokens, left_bound, i - 1, true));
+            }
+
             else
                 list_add(command, init_command_entry(tokens, left_bound, i, true));
         }
