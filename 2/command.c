@@ -31,6 +31,10 @@ command_exec(list *command)
 
         switch (entry->next_operator_type)
         {
+            case ENTRY_AND:
+                if (execution_mode == CAUGHT_OR_ONLY)
+                    execution_mode = RUN_AND_CHAIN;
+                break;
             case ENTRY_OR:
                 execution_mode |= CAUGHT_OR_ONLY;
                 break;
