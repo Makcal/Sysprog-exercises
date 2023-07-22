@@ -2,8 +2,6 @@
 #include "evaluator.h"
 #include <stdio.h>
 
-//#include "../utils/heap_help/heap_help.h"
-
 int
 main(void)
 {
@@ -24,6 +22,5 @@ main(void)
             break;
     }
 
-//    heaph_get_alloc_count();
     return exit_code;
 }

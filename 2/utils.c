@@ -54,16 +54,17 @@ list_trim(list *list_ptr)
 string_builder
 *string_builder_init()
 {
-    string_builder *builder = malloc(sizeof(string_builder));
-    builder->size = 0;
-    builder->content = calloc(1, 1 * sizeof(void *)); // TODO: Optimize
-    return builder;
+    return calloc(1, sizeof(string_builder));
 }
 
 void
 string_builder_append(string_builder *builder, char c)
 {
-    builder->content = checked_realloc(builder->content, builder->size + 1);
+    if (!builder->content)
+        builder->content = malloc((builder->size + 1) * sizeof(void *));
+    else
+        builder->content = checked_realloc(builder->content, builder->size + 1);
+
     builder->content[builder->size++] = c;
     builder->content[builder->size] = '\0';
 }
@@ -77,6 +78,8 @@ char
 void
 string_builder_free(string_builder *builder)
 {
-    free(builder->content);
+    if (builder->content)
+        free(builder->content);
+
     free(builder);
 }

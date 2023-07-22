@@ -39,7 +39,7 @@ list
     list *tokens = list_init();
 
     bool termination_state = false;
-    string_builder *current_token_value;
+    string_builder *current_token_value = NULL;
 
     for (; !termination_state;)
     {
@@ -169,6 +169,9 @@ list
             }
         }
     }
+
+    if (current_token_value)
+        free(current_token_value);
 
     list_trim(tokens);
     return tokens;
