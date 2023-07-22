@@ -35,3 +35,21 @@ do {                                                                            
     free((list)->items);                                                        \
     free((list));                                                               \
 } while (false)
+
+typedef struct
+{
+    size_t size;
+    char *content;
+} string_builder;
+
+string_builder
+*string_builder_init();
+
+void
+string_builder_append(string_builder *builder, char c);
+
+char
+*to_string(string_builder *builder);
+
+void
+string_builder_free(string_builder *builder);

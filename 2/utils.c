@@ -20,20 +20,22 @@ void
 }
 
 list *
-list_init() {
+list_init()
+{
     list *list_ptr = malloc(sizeof(list));
     list_ptr->size = 0;
     list_ptr->capacity = LIST_CAPACITY;
-    list_ptr->items = malloc(LIST_CAPACITY * sizeof(void *));
+    list_ptr->items = calloc(1, LIST_CAPACITY * sizeof(void *));
     return list_ptr;
 }
 
 void
-list_add(list *list_ptr, void *item) {
+list_add(list *list_ptr, void *item)
+{
     if (list_ptr->size == list_ptr->capacity)
     {
         list_ptr->capacity += LIST_CAPACITY;
-        list_ptr->items= checked_realloc(list_ptr->items, list_ptr->capacity);
+        list_ptr->items = checked_realloc(list_ptr->items, list_ptr->capacity);
     }
 
     list_ptr->items[list_ptr->size++] = item;
@@ -42,6 +44,39 @@ list_add(list *list_ptr, void *item) {
 void
 list_trim(list *list_ptr)
 {
+    if (!list_ptr || !list_ptr->size)
+        return;  // Ignore trim in case list_ptr->size == 0
+
     list_ptr->items = checked_realloc(list_ptr->items, list_ptr->size);
     list_ptr->capacity = list_ptr->size;
+}
+
+string_builder
+*string_builder_init()
+{
+    string_builder *builder = malloc(sizeof(string_builder));
+    builder->size = 0;
+    builder->content = calloc(1, 1 * sizeof(void *)); // TODO: Optimize
+    return builder;
+}
+
+void
+string_builder_append(string_builder *builder, char c)
+{
+    builder->content = checked_realloc(builder->content, builder->size + 1);
+    builder->content[builder->size++] = c;
+    builder->content[builder->size] = '\0';
+}
+
+char
+*to_string(string_builder *builder)
+{
+    return strdup(builder->content);
+}
+
+void
+string_builder_free(string_builder *builder)
+{
+    free(builder->content);
+    free(builder);
 }
