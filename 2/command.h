@@ -15,7 +15,7 @@ typedef struct
     int next_operator_type;
 } command_entry;
 
-int
+exit_context
 command_exec(list *command);
 
 void

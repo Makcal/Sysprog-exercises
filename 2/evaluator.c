@@ -88,16 +88,19 @@ static command_entry
     return entry;
 }
 
-int
+exit_context
 evaluate(list *tokens)
 {
+    exit_context context;
+    context.exit_code = EXIT_NO_CODE;
+    context.is_terminate = false;
+
     if (!tokens->size)
-        return EXIT_SUCCESS;
+        return context;
 
     list *command = list_init();
     bool is_background_execution = false;
     size_t left_bound = 0;
-    int return_code = EXIT_SUCCESS;
 
     for (size_t i = 0; i < tokens->size; ++i)
     {
@@ -128,10 +131,10 @@ evaluate(list *tokens)
         assert_true(pid >= 0, "Error forking in evaluate()");
 
         if (pid == 0)
-            return_code = command_exec(command);
+            context = command_exec(command);
     } else
-        return_code = command_exec(command);
+        context = command_exec(command);
 
     command_free(command);
-    return return_code;
+    return context;
 }

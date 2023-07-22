@@ -1,4 +1,5 @@
 #include "utils.h"
+#include "pipe_list.h"
 
-int
+exit_context
 evaluate(list *tokens);

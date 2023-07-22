@@ -14,7 +14,7 @@ change_directory(program *prg)
 static inline void
 program_exit(program *prg)
 {
-    exit(prg->argv[1] ? (int) strtol(prg->argv[1], NULL, 10) : EXIT_SUCCESS);
+    _exit(prg->argv[1] ? (int) strtol(prg->argv[1], NULL, 10) : EXIT_NO_CODE);
 }
 
 static void
@@ -31,11 +31,6 @@ program_exec(program *prg)
         assert_true(dup2(file, STDOUT_FILENO) >= 0, "Error during dup2() in do_command_exec()");
         assert_true(close(file) >= 0, "Error closing file in do_command_exec()");
     }
-
-    if (str_equal(prg->argv[0], "cd"))
-        exit(change_directory(prg));
-    else if (str_equal(prg->argv[0], "exit"))
-        program_exit(prg);
 
     execvp(prg->argv[0], prg->argv);
     fputs("execvp() failed", stderr);
@@ -59,7 +54,7 @@ program_free(program *prg)
     free(prg);
 }
 
-int
+exit_context
 pipe_list_exec(list *pipe_list)
 {
     int previous_pipe[2], current_pipe[2];
@@ -67,14 +62,25 @@ pipe_list_exec(list *pipe_list)
     int code = EXIT_SUCCESS;
     size_t i;
 
+    exit_context context;
+    context.exit_code = EXIT_NO_CODE;
+    context.is_terminate = false;
+
     if (pipe_list->size == 1)
     {
         program *prg = pipe_list->items[0];
 
         if (str_equal(prg->argv[0], "cd"))
-            return change_directory(prg);
+        {
+            context.exit_code = change_directory(prg);
+            return context;
+        }
         else if (str_equal(prg->argv[0], "exit"))
-            program_exit(prg);
+        {
+            context.exit_code = prg->argv[1] ? (int) strtol(prg->argv[1], NULL, 10) : EXIT_NO_CODE;
+            context.is_terminate = true;
+            return context;
+        }
     }
 
     for (i = 0; i < pipe_list->size; ++i)
@@ -93,7 +99,15 @@ pipe_list_exec(list *pipe_list)
                 dup2(previous_pipe[READ_END], STDIN_FILENO);
 
             close(current_pipe[READ_END]);
-            program_exec(pipe_list->items[i]);
+
+            program *prg = pipe_list->items[i];
+
+            if (str_equal(prg->argv[0], "cd"))
+                exit(change_directory(prg));
+            else if (str_equal(prg->argv[0], "exit"))
+                program_exit(prg);
+            else
+                program_exec(prg);
         } else
         {
             children[i] = pid;
@@ -112,7 +126,8 @@ pipe_list_exec(list *pipe_list)
         code = WEXITSTATUS(code);
     }
 
-    return code;
+    context.exit_code = code;
+    return context;
 }
 
 void

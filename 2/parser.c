@@ -44,7 +44,8 @@ list
     for (; !termination_state;)
     {
         for (c = next_char(); c == ' '; c = next_char());
-        if (c == EOF) break;
+        if (c == EOF)
+            return tokens;
 
         current_token_value = string_builder_init();
 

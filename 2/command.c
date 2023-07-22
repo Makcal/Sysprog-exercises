@@ -7,10 +7,15 @@ command_entry_free(command_entry *entry)
     free(entry);
 }
 
-int
+exit_context
 command_exec(list *command)
 {
-    int code = EXIT_SUCCESS;
+    exit_context context;
+    memset(&context, 0, sizeof(exit_context));
+
+    if (!command->size)
+        return context;
+
     int execution_mode = RUN_AND_CHAIN;
     command_entry *entry;
 
@@ -19,14 +24,23 @@ command_exec(list *command)
         entry = command->items[i];
 
         if (execution_mode == RUN_AND_CHAIN)
-            code = pipe_list_exec(entry->pipe_list);
+        {
+            context = pipe_list_exec(entry->pipe_list);
+
+            if (context.is_terminate)
+                goto out;
+        }
         else if (execution_mode == EXEC_AFTER_OR)
         {
-            code = pipe_list_exec(entry->pipe_list);
+            context = pipe_list_exec(entry->pipe_list);
+
+            if (context.is_terminate)
+                goto out;
+
             execution_mode = RUN_AND_CHAIN;
         }
 
-        if (code != EXIT_SUCCESS)
+        if (context.exit_code != EXIT_SUCCESS)
             execution_mode = AND_CHAIN_FAILED;
 
         switch (entry->next_operator_type)
@@ -44,7 +58,7 @@ command_exec(list *command)
     }
 
     out:
-    return code;
+    return context;
 }
 
 void
