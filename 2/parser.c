@@ -59,12 +59,14 @@ list
                 string_builder_append(current_token_value, next_c);
                 list_add(tokens, init_token(current_token_value, LOGICAL_OPERATOR_AND));
                 string_builder_free(current_token_value);
+                current_token_value = NULL;
             } else
             {
                 ungetc(next_c, stdin);
                 termination_state = true;
                 list_add(tokens, init_token(current_token_value, BACKGROUND_EXECUTION));
                 string_builder_free(current_token_value);
+                current_token_value = NULL;
             }
         } else if (c == '|')
         {
@@ -76,11 +78,13 @@ list
                 string_builder_append(current_token_value, next_c);
                 list_add(tokens, init_token(current_token_value, LOGICAL_OPERATOR_OR));
                 string_builder_free(current_token_value);
+                current_token_value = NULL;
             } else
             {
                 ungetc(next_c, stdin);
                 list_add(tokens, init_token(current_token_value, PIPELINE));
                 string_builder_free(current_token_value);
+                current_token_value = NULL;
             }
         } else if (c == '>')
         {
@@ -92,11 +96,13 @@ list
                 string_builder_append(current_token_value, next_c);
                 list_add(tokens, init_token(current_token_value, OUTPUT_REDIRECTION_APPEND));
                 string_builder_free(current_token_value);
+                current_token_value = NULL;
             } else
             {
                 ungetc(next_c, stdin);
                 list_add(tokens, init_token(current_token_value, OUTPUT_REDIRECTION_WRITE));
                 string_builder_free(current_token_value);
+                current_token_value = NULL;
             }
         } else if (c == '#')
         {
@@ -166,6 +172,7 @@ list
 
                 list_add(tokens, init_token(current_token_value, WORD));
                 string_builder_free(current_token_value);
+                current_token_value = NULL;
             }
         }
     }
