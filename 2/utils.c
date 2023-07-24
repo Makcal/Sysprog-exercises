@@ -61,24 +61,17 @@ void
 string_builder_append(string_builder *builder, char c)
 {
     if (!builder->content)
-        builder->content = malloc(sizeof(char));
+        builder->content = malloc((builder->size + 1) * sizeof(void *));
     else
-    {
-        char *tmp = realloc(builder->content, (builder->size + 1) * sizeof(char));
-        assert_true(tmp != NULL, "Error reallocating string_builder during append");
-        builder->content = tmp;
-    }
+        builder->content = checked_realloc(builder->content, builder->size + 1);
 
     builder->content[builder->size++] = c;
+    builder->content[builder->size] = '\0';
 }
 
 char
 *to_string(string_builder *builder)
 {
-    char *tmp = realloc(builder->content, (builder->size + 1) * sizeof(char));
-    assert_true(tmp != NULL, "Error reallocating string_builder during to_string");
-    tmp[builder->size] = '\0';
-
     return strdup(builder->content);
 }
 

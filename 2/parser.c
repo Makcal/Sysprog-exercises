@@ -171,7 +171,7 @@ list
     }
 
     if (current_token_value)
-        free(current_token_value);
+        string_builder_free(current_token_value);
 
     list_trim(tokens);
     return tokens;
