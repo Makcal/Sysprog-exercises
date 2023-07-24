@@ -131,7 +131,11 @@ evaluate(list *tokens)
         assert_true(pid >= 0, "Error forking in evaluate()");
 
         if (pid == 0)
+        {
             context = command_exec(command);
+            command_free(command);
+            _exit(context.exit_code);
+        }
     } else
         context = command_exec(command);
 
