@@ -95,15 +95,15 @@ pipe_list_exec(list *pipe_list)
         {
             if (i < pipe_list->size - 1)
                 dup2(current_pipe[WRITE_END], STDOUT_FILENO);
+
             if (i > 0)
                 dup2(previous_pipe[READ_END], STDIN_FILENO);
 
             close(current_pipe[READ_END]);
-
             program *prg = pipe_list->items[i];
 
             if (str_equal(prg->argv[0], "cd"))
-                exit(change_directory(prg));
+                _exit(change_directory(prg));
             else if (str_equal(prg->argv[0], "exit"))
                 program_exit(prg);
             else
@@ -115,7 +115,9 @@ pipe_list_exec(list *pipe_list)
             if (i > 0)
                 close(previous_pipe[READ_END]);
 
-            close(current_pipe[WRITE_END]);
+            if (pipe_list->size > 1)
+                close(current_pipe[WRITE_END]);
+
             previous_pipe[READ_END] = current_pipe[READ_END];
         }
     }
