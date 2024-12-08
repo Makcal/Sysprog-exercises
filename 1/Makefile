@@ -10,11 +10,11 @@ build/sort: build/libcoro.o build/sort.o
 	cd build; \
 	  gcc $(GCC_FLAGS) libcoro.o sort.o -o sort
 
-build/libcoro.o: libcoro.c
-	gcc $(GCC_FLAGS) libcoro.c -c -o build/libcoro.o
+build/libcoro.o: solution/libcoro.c
+	gcc $(GCC_FLAGS) solution/libcoro.c -c -o build/libcoro.o
 
-build/solution.o: solution.c
-	gcc $(GCC_FLAGS) solution.c -c -o build/solution.o
+build/solution.o: solution/solution.c
+	gcc $(GCC_FLAGS) solution/solution.c -c -o build/solution.o
 
 build/sort.o: sort.c
 	gcc $(GCC_FLAGS) sort.c -c -o build/sort.o
