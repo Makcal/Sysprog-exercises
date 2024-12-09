@@ -1,24 +1,32 @@
 GCC_FLAGS = -Wextra -Werror -Wall -Wno-gnu-folding-constant -O2
 
-all: build/sort
+all: build/main
 
-build/solution: build/libcoro.o build/solution.o
-	cd build; \
-	  gcc $(GCC_FLAGS) libcoro.o solution.o -o solution
 
-build/sort: build/libcoro.o build/sort.o
-	cd build; \
-	  gcc $(GCC_FLAGS) libcoro.o sort.o -o sort
+reference: build/reference/main
 
-build/libcoro.o: solution/libcoro.c
-	gcc $(GCC_FLAGS) solution/libcoro.c -c -o build/libcoro.o
+build/reference/main: build/reference/libcoro.o build/reference/main.o
+	cd build/reference; \
+	  gcc $(GCC_FLAGS) libcoro.o main.o -o main
 
-build/solution.o: solution/solution.c
-	gcc $(GCC_FLAGS) solution/solution.c -c -o build/solution.o
+build/reference/libcoro.o: reference/libcoro.c
+	gcc $(GCC_FLAGS) reference/libcoro.c -c -o build/reference/libcoro.o
 
-build/sort.o: sort.c
-	gcc $(GCC_FLAGS) sort.c -c -o build/sort.o
+build/reference/main.o: reference/main.c
+	gcc $(GCC_FLAGS) reference/main.c -c -o build/reference/main.o
+
+
+mine: build/mine/main
+
+build/mine/main: build/mine/main.o
+	cd build/mine; \
+	  gcc $(GCC_FLAGS) main.o -o main
+
+build/mine/main.o: mine/main.c
+	gcc $(GCC_FLAGS) mine/main.c -c -o build/mine/main.o
 
 clean:
-	rm build/*
+	cd build; \
+		rm -rf *; \
+		mkdir mine reference
 
