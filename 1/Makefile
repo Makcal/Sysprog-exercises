@@ -18,15 +18,20 @@ build/reference/main.o: reference/main.c
 
 mine: build/mine/main
 
-build/mine/main: build/mine/main.o build/mine/libcoro.o
+build/mine/main: build/mine/main.o build/mine/libcoro.o build/heap_help.o
 	cd build/mine; \
-	  gcc $(GCC_FLAGS) libcoro.o main.o -o main
+	  gcc $(GCC_FLAGS) ../heap_help.o libcoro.o main.o -o main
 
 build/mine/main.o: mine/main.c
 	gcc $(GCC_FLAGS) mine/main.c -c -o build/mine/main.o
 
 build/mine/libcoro.o: mine/libcoro.c
 	gcc $(GCC_FLAGS) mine/libcoro.c -c -o build/mine/libcoro.o
+
+
+build/heap_help.o: ../utils/heap_help/heap_help.c
+	gcc $(GCC_FLAGS) ../utils/heap_help/heap_help.c -c -o build/heap_help.o
+
 
 clean:
 	cd build; \

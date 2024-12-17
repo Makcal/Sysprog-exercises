@@ -7,7 +7,7 @@
 void coroutine(void *data) {
     int n = *(int *)data;
     printf("a: %d\n", n);
-    /*coro_yield();*/
+    coro_yield();
     printf("b: %d\n", n);
 }
 

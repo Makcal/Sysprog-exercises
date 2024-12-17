@@ -57,6 +57,7 @@ void loop_start(void) {
         old_node->next->prev = old_node->prev;
         free(old_node);
     }
+    free(current_loop->coros.sentinel);
 }
 
 void coro_yield(void) {
