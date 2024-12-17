@@ -23,14 +23,29 @@ typedef struct {
     ucontext_t main_context;
 } loop_t;
 
+/*
+ * Initializes a loop structure.
+ */
 void loop_init(loop_t *);
 
+/*
+ * Save a loop as the global to be run later.
+ */
 void set_loop(loop_t *);
 
+/*
+ * Adds a task to a loop.
+ */
 void coro_create(loop_t *, void (*)(void *), void *);
 
+/*
+ * The loop's state is invalid after it finishes.
+ */
 void loop_start(void);
 
+/*
+ * Pauses execution to pass it to another task.
+ */
 void coro_yield(void);
 
 #endif // H_LIBCORO
