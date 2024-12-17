@@ -8,10 +8,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define handle_error()                                                         \
-    ({                                                                         \
-        printf("Error %s\n", strerror(errno));                                 \
-        exit(-1);                                                              \
+#define handle_error()                                                                                                 \
+    ({                                                                                                                 \
+        printf("Error %s\n", strerror(errno));                                                                         \
+        exit(-1);                                                                                                      \
     })
 
 /* Main coroutine structure, its context. */
@@ -74,11 +74,17 @@ static void coro_list_delete(struct coro *c) {
         coro_list = next;
 }
 
-int coro_status(const struct coro *c) { return c->ret; }
+int coro_status(const struct coro *c) {
+    return c->ret;
+}
 
-long long coro_switch_count(const struct coro *c) { return c->switch_count; }
+long long coro_switch_count(const struct coro *c) {
+    return c->switch_count;
+}
 
-bool coro_is_finished(const struct coro *c) { return c->is_finished; }
+bool coro_is_finished(const struct coro *c) {
+    return c->is_finished;
+}
 
 void coro_delete(struct coro *c) {
     free(c->stack);
@@ -123,7 +129,9 @@ struct coro *coro_sched_wait(void) {
     return NULL;
 }
 
-struct coro *coro_this(void) { return coro_this_ptr; }
+struct coro *coro_this(void) {
+    return coro_this_ptr;
+}
 
 /*
  * The core part of the coroutines creation - this signal handler

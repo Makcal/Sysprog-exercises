@@ -51,8 +51,7 @@ struct coro_context {
     files_pool *pool;
 };
 
-static coro_context *new_coro_context(char *name, time_t quantum,
-                                      files_pool *pool) {
+static coro_context *new_coro_context(char *name, time_t quantum, files_pool *pool) {
     coro_context *context = calloc(1, sizeof(coro_context));
 
     context->name = name;
@@ -76,10 +75,8 @@ static void coro_end_timer(coro_context *context) {
  * @param context coro_context
  */
 static void coro_append_execution_time(coro_context *context) {
-    context->execution_time +=
-        context->end_time.tv_sec * 1e9 - context->start_time.tv_sec * 1e9;
-    context->execution_time +=
-        context->end_time.tv_nsec - context->start_time.tv_nsec;
+    context->execution_time += context->end_time.tv_sec * 1e9 - context->start_time.tv_sec * 1e9;
+    context->execution_time += context->end_time.tv_nsec - context->start_time.tv_nsec;
 
     memset(&context->start_time, 0, sizeof(context->start_time));
     memset(&context->end_time, 0, sizeof(context->end_time));
@@ -92,8 +89,7 @@ static void coro_append_execution_time(coro_context *context) {
  * @param this current coroutine
  * @param file_name file to open & sort
  */
-static void coro_handle_file_selection(coro_context *casted_context,
-                                       char *file_name) {
+static void coro_handle_file_selection(coro_context *casted_context, char *file_name) {
     printf("%s: selected file %s\n", casted_context->name, file_name);
 
     {
@@ -113,7 +109,9 @@ static void coro_handle_file_selection(coro_context *casted_context,
  * @param pool files_pool
  * @return head of the pool as an iterator pointer
  */
-static files_list *new_iterator(files_pool *pool) { return pool->head; }
+static files_list *new_iterator(files_pool *pool) {
+    return pool->head;
+}
 
 static files_list *peek_next_file(files_list *iterator) {
     if (iterator == NULL)
@@ -121,7 +119,9 @@ static files_list *peek_next_file(files_list *iterator) {
     return iterator->prev;
 }
 
-static files_pool *new_files_pool() { return calloc(1, sizeof(files_pool)); }
+static files_pool *new_files_pool() {
+    return calloc(1, sizeof(files_pool));
+}
 
 static void del_files_pool(files_pool *pool) {
     files_list *iterator = new_iterator(pool);
@@ -204,8 +204,7 @@ static void write_file(file_content *content, char *file_name) {
     assert(fclose(file) == 0);
 }
 
-static void merge(int *array, int *tmp, size_t size, size_t from, size_t mid,
-                  size_t to) {
+static void merge(int *array, int *tmp, size_t size, size_t from, size_t mid, size_t to) {
     size_t k = from, i = from, j = mid + 1;
 
     while (i <= mid && j <= to)
@@ -233,11 +232,8 @@ static void merge_sort(file_content *content, coro_context *casted_context) {
             merge(array, tmp, size, i, i + m - 1, min(i + 2 * m - 1, size - 1));
 
             coro_end_timer(casted_context);
-            time_t current_execution_time =
-                casted_context->end_time.tv_nsec -
-                casted_context->start_time.tv_nsec +
-                1e9 * (casted_context->end_time.tv_sec -
-                       casted_context->start_time.tv_sec);
+            time_t current_execution_time = casted_context->end_time.tv_nsec - casted_context->start_time.tv_nsec +
+                                            1e9 * (casted_context->end_time.tv_sec - casted_context->start_time.tv_sec);
 
             if (current_execution_time > casted_context->quantum) {
                 // Force update timer in order to account if-condition and two
@@ -258,8 +254,7 @@ static void merge_all_files(files_pool *pool, char *merged_file_name) {
     size_t i, j;
 
     size_t contents_capacity = pool->size;
-    file_content **contents =
-        malloc(contents_capacity * sizeof(file_content *));
+    file_content **contents = malloc(contents_capacity * sizeof(file_content *));
 
     for (i = 0; iterator != NULL; ++i) {
         contents[i] = read_file(iterator->file_name);
@@ -278,8 +273,7 @@ static void merge_all_files(files_pool *pool, char *merged_file_name) {
         int min_value = INT_MAX;
 
         for (j = 0; j < contents_capacity; ++j) {
-            if (indices[j] < contents[j]->size &&
-                contents[j]->array[indices[j]] < min_value) {
+            if (indices[j] < contents[j]->size && contents[j]->array[indices[j]] < min_value) {
 
                 min_index = j;
                 min_value = contents[j]->array[indices[j]];
@@ -331,8 +325,7 @@ static int coroutine_func_f(void *context) {
     coro_end_timer(casted_context);
     coro_append_execution_time(casted_context);
 
-    printf("Stopped coroutine %s, exec time: %ld nanoseconds\n",
-           casted_context->name, casted_context->execution_time);
+    printf("Stopped coroutine %s, exec time: %ld nanoseconds\n", casted_context->name, casted_context->execution_time);
 
     return EXIT_SUCCESS;
 }
@@ -352,8 +345,7 @@ int main(int argc, char **argv) {
     size_t coro_count = strtoull(argv[1], NULL, 10);
 
     // Bonus task #1
-    time_t quantum = (time_t)((double)strtoull(argv[2], NULL, 10) /
-                              (double)coro_count * 10e3);
+    time_t quantum = (time_t)((double)strtoull(argv[2], NULL, 10) / (double)coro_count * 10e3);
 
     for (size_t i = 0; i < coro_count; ++i) {
         char name[16];
