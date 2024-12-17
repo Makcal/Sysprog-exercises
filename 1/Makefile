@@ -1,6 +1,6 @@
 GCC_FLAGS = -Wextra -Werror -Wall -Wno-gnu-folding-constant -O2
 
-all: build/main
+all: mine
 
 
 reference: build/reference/main
@@ -18,12 +18,15 @@ build/reference/main.o: reference/main.c
 
 mine: build/mine/main
 
-build/mine/main: build/mine/main.o
+build/mine/main: build/mine/main.o build/mine/libcoro.o
 	cd build/mine; \
-	  gcc $(GCC_FLAGS) main.o -o main
+	  gcc $(GCC_FLAGS) libcoro.o main.o -o main
 
 build/mine/main.o: mine/main.c
 	gcc $(GCC_FLAGS) mine/main.c -c -o build/mine/main.o
+
+build/mine/libcoro.o: mine/libcoro.c
+	gcc $(GCC_FLAGS) mine/libcoro.c -c -o build/mine/libcoro.o
 
 clean:
 	cd build; \
