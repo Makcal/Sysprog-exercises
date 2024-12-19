@@ -29,7 +29,6 @@ struct common_data {
 };
 
 struct coro_data {
-    size_t coro_i;
     double running_time;
     size_t switches;
     const struct common_data *common_data_p;
@@ -41,7 +40,10 @@ static double get_time_ms(void) {
 
 static inline void coro_yield_with_metrics(double *const start_time_p, struct coro_data *const coro_data_p) {
     double end_time = get_time_ms();
-    coro_data_p->running_time += end_time - *start_time_p;
+    double passed_time = end_time - *start_time_p;
+    if (passed_time < coro_data_p->common_data_p->quantum)
+        return;
+    coro_data_p->running_time += passed_time;
     coro_data_p->switches++;
     coro_yield();
     *start_time_p = get_time_ms();
@@ -163,7 +165,6 @@ int main(int argc, char *argv[]) {
     const struct common_data common_data = {.quantum = quantum, .n_files = n_files, .file_data_p = &file_data};
     struct coro_data coro_data[n_coro];
     for (size_t i = 0; i < n_coro; i++) {
-        coro_data[i].coro_i = i;
         coro_data[i].common_data_p = &common_data;
         coro_data[i].switches = 0;
         coro_data[i].running_time = 0;
