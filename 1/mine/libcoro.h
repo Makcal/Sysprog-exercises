@@ -31,7 +31,7 @@ void loop_init(loop_t *);
 /*
  * Save a loop as the global to be run later.
  */
-void set_loop(loop_t *);
+void use_loop(loop_t *);
 
 /*
  * Adds a task to a loop.

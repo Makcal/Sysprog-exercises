@@ -9,7 +9,7 @@
 typedef struct coro coro_t;
 typedef struct coro_list_node coro_list_node_t;
 
-static const size_t STACK_SIZE = 256 * 1024 * sizeof(char); // 256 KB
+static const size_t STACK_SIZE = 8 * 1024 * 1024 * sizeof(char); // 8 MB
 static loop_t *current_loop = NULL;
 
 void loop_init(loop_t *loop) {
@@ -23,7 +23,7 @@ void loop_init(loop_t *loop) {
     getcontext(&loop->main_context);
 }
 
-void set_loop(loop_t *loop) {
+void use_loop(loop_t *loop) {
     current_loop = loop;
 }
 
@@ -47,11 +47,13 @@ void coro_create(loop_t *loop, void (*func)(void *), void *args) {
 
 void loop_start(void) {
     current_loop->current_coro_node = current_loop->coros.sentinel->next;
-    while (current_loop->coros.sentinel != current_loop->coros.sentinel->next) {
+    while (current_loop->coros.sentinel->next != current_loop->coros.sentinel) {
         swapcontext(&current_loop->main_context, &current_loop->current_coro_node->coro.context);
 
         coro_list_node_t *old_node = current_loop->current_coro_node;
         current_loop->current_coro_node = current_loop->current_coro_node->next;
+        if (current_loop->current_coro_node == current_loop->coros.sentinel)
+            current_loop->current_coro_node = current_loop->current_coro_node->next;
 
         old_node->prev->next = old_node->next;
         old_node->next->prev = old_node->prev;
